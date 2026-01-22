@@ -1,21 +1,19 @@
 import {
+  
+  
   computed,
   effect,
   peek,
   scoped,
-  tick,
-  type ReadSignal,
-  type WriteSignal,
+  tick
 } from 'maverick.js';
 import { DOMEvent, isArray, isString, noop } from 'maverick.js/std';
 
-import type { MediaContext } from '../../core/api/media-context';
-import type { MediaPlayerProps } from '../../core/api/player-props';
-import { isVideoQualitySrc, type Src } from '../../core/api/src-types';
+import {  isVideoQualitySrc } from '../../core/api/src-types';
 import { AudioProviderLoader } from '../../providers/audio/loader';
 import { DASHProviderLoader } from '../../providers/dash/loader';
 import { HLSProviderLoader } from '../../providers/hls/loader';
-import type { MediaProviderLoader } from '../../providers/types';
+import { ShakaProviderLoader } from '../../providers/shaka/loader';
 import { VideoProviderLoader } from '../../providers/video/loader';
 import { VimeoProviderLoader } from '../../providers/vimeo/loader';
 import { YouTubeProviderLoader } from '../../providers/youtube/loader';
@@ -26,23 +24,28 @@ import {
 import { isDASHSrc, isHLSSrc } from '../../utils/mime';
 import { getRequestCredentials, preconnect } from '../../utils/network';
 import { isHLSSupported } from '../../utils/support';
+import type {Src} from '../../core/api/src-types';
+import type { MediaProviderLoader } from '../../providers/types';
+import type {ReadSignal, WriteSignal} from 'maverick.js';
+import type { MediaPlayerProps } from '../../core/api/player-props';
+import type { MediaContext } from '../../core/api/media-context';
 
-let warned = __DEV__ ? new Set<any>() : undefined;
+const warned = __DEV__ ? new Set<any>() : undefined;
 
 const sourceTypes = new Map<string, string>();
 
 export class SourceSelection {
   #initialize = false;
-  #loaders: ReadSignal<MediaProviderLoader[]>;
-  #domSources: ReadSignal<Src[]>;
+  #loaders: ReadSignal<Array<MediaProviderLoader>>;
+  #domSources: ReadSignal<Array<Src>>;
   #media: MediaContext;
   #loader: WriteSignal<MediaProviderLoader | null>;
 
   constructor(
-    domSources: ReadSignal<Src[]>,
+    domSources: ReadSignal<Array<Src>>,
     media: MediaContext,
     loader: WriteSignal<MediaProviderLoader | null>,
-    customLoaders: MediaProviderLoader[] = [],
+    customLoaders: Array<MediaProviderLoader> = [],
   ) {
     this.#domSources = domSources;
     this.#media = media;
@@ -50,18 +53,35 @@ export class SourceSelection {
 
     const DASH_LOADER = new DASHProviderLoader(),
       HLS_LOADER = new HLSProviderLoader(),
+      SHAKA_LOADER = new ShakaProviderLoader(),
       VIDEO_LOADER = new VideoProviderLoader(),
       AUDIO_LOADER = new AudioProviderLoader(),
       YOUTUBE_LOADER = new YouTubeProviderLoader(),
       VIMEO_LOADER = new VimeoProviderLoader(),
       EMBED_LOADERS = [YOUTUBE_LOADER, VIMEO_LOADER];
 
-    this.#loaders = computed<MediaProviderLoader[]>(() => {
+    this.#loaders = computed<Array<MediaProviderLoader>>(() => {
       const remoteLoader = media.$state.remotePlaybackLoader();
 
       const loaders = media.$props.preferNativeHLS()
-        ? [VIDEO_LOADER, AUDIO_LOADER, DASH_LOADER, HLS_LOADER, ...EMBED_LOADERS, ...customLoaders]
-        : [HLS_LOADER, VIDEO_LOADER, AUDIO_LOADER, DASH_LOADER, ...EMBED_LOADERS, ...customLoaders];
+        ? [
+            VIDEO_LOADER,
+            AUDIO_LOADER,
+            SHAKA_LOADER,
+            DASH_LOADER,
+            HLS_LOADER,
+            ...EMBED_LOADERS,
+            ...customLoaders,
+          ]
+        : [
+            SHAKA_LOADER,
+            HLS_LOADER,
+            VIDEO_LOADER,
+            AUDIO_LOADER,
+            DASH_LOADER,
+            ...EMBED_LOADERS,
+            ...customLoaders,
+          ];
 
       return remoteLoader ? [remoteLoader, ...loaders] : loaders;
     });
@@ -170,7 +190,7 @@ export class SourceSelection {
     tick();
   }
 
-  #findNewSource(currentSource: Src, sources: Src[]) {
+  #findNewSource(currentSource: Src, sources: Array<Src>) {
     let newSource: Src = { src: '', type: '' },
       newLoader: MediaProviderLoader | null = null,
       triggerEvent: DOMEvent = new DOMEvent('sources-change', { detail: { sources } }),
@@ -226,7 +246,7 @@ export class SourceSelection {
   #notifyLoaderChange(loader: MediaProviderLoader | null, trigger?: Event) {
     this.#media.$providerSetup.set(false);
     this.#media.notify('provider-change', null, trigger);
-    loader && peek(() => loader!.preconnect?.(this.#media));
+    loader && peek(() => loader.preconnect?.(this.#media));
     this.#loader.set(loader);
     this.#media.notify('provider-loader-change', loader, trigger);
   }
@@ -339,7 +359,7 @@ export class SourceSelection {
   }
 }
 
-function normalizeSrc(src: MediaPlayerProps['src']): Src[] {
+function normalizeSrc(src: MediaPlayerProps['src']): Array<Src> {
   return (isArray(src) ? src : [src]).map((src) => {
     if (isString(src)) {
       return { src, type: inferType(src) };

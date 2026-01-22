@@ -28,6 +28,12 @@ export type * from '../providers/dash/types';
 export { DASHProviderLoader } from '../providers/dash/loader';
 export type { DASHProvider } from '../providers/dash/provider';
 
+// Shaka
+export type * from '../providers/shaka/events';
+export type * from '../providers/shaka/types';
+export { ShakaProviderLoader } from '../providers/shaka/loader';
+export type { ShakaProvider } from '../providers/shaka/provider';
+
 // Google Cast
 export type { GoogleCastLoader } from '../providers/google-cast/loader';
 export type { GoogleCastProvider } from '../providers/google-cast/provider';

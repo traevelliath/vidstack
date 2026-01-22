@@ -5,18 +5,21 @@ import type { LoggerEvents } from '../../foundation/logger/events';
 import type { DASHProviderEvents } from '../../providers/dash/events';
 import type { GoogleCastEvents } from '../../providers/google-cast/events';
 import type { HLSProviderEvents } from '../../providers/hls/events';
+import type { ShakaProviderEvents } from '../../providers/shaka/events';
 import type { VideoPresentationEvents } from '../../providers/video/presentation/events';
 import type { MediaEvents } from './media-events';
 import type { MediaRequestEvents } from './media-request-events';
 
 export interface MediaPlayerEvents
-  extends MediaEvents,
+  extends
+    MediaEvents,
     MediaRequestEvents,
     MediaUserEvents,
     LoggerEvents,
     VideoPresentationEvents,
     HLSProviderEvents,
     DASHProviderEvents,
+    ShakaProviderEvents,
     GoogleCastEvents {
   'media-player-connect': MediaPlayerConnectEvent;
   /** @internal */

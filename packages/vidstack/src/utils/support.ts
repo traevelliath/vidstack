@@ -113,14 +113,14 @@ export async function canChangeVolume() {
 export function getMediaSource(): typeof MediaSource | undefined {
   return __SERVER__
     ? undefined
-    : window?.ManagedMediaSource ?? window?.MediaSource ?? window?.WebKitMediaSource;
+    : (window?.ManagedMediaSource ?? window?.MediaSource ?? window?.WebKitMediaSource);
 }
 
 /**
  * @see {@link https://github.com/video-dev/hls.js/blob/master/src/is-supported.ts}
  */
 export function getSourceBuffer(): typeof SourceBuffer | undefined {
-  return __SERVER__ ? undefined : window?.SourceBuffer ?? window?.WebKitSourceBuffer;
+  return __SERVER__ ? undefined : (window?.SourceBuffer ?? window?.WebKitSourceBuffer);
 }
 
 /**
@@ -159,5 +159,13 @@ export function isHLSSupported(): boolean {
  * `ManagedMediaSource` and a valid `SourceBuffer` API are available.
  */
 export function isDASHSupported(): boolean {
+  return isHLSSupported();
+}
+
+/**
+ * Whether Shaka Player is supported in this environment. Checks whether `MediaSource` or
+ * `ManagedMediaSource` and a valid `SourceBuffer` API are available.
+ */
+export function isShakaSupported(): boolean {
   return isHLSSupported();
 }

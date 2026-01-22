@@ -27,6 +27,7 @@ const NPM_EXTERNAL_PACKAGES = [
     'media-captions',
     'hls.js',
     'dashjs',
+    'shaka-player',
     /^@floating-ui/,
     /^remotion/,
   ],

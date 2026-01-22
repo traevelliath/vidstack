@@ -9,6 +9,7 @@ import type { AudioProvider } from './audio/provider';
 import type { DASHProvider } from './dash/provider';
 import type { GoogleCastProvider } from './google-cast/provider';
 import type { HLSProvider } from './hls/provider';
+import type { ShakaProvider } from './shaka/provider';
 import type { VideoProvider } from './video/provider';
 import type { VimeoProvider } from './vimeo/provider';
 import type { YouTubeProvider } from './youtube/provider';
@@ -18,6 +19,7 @@ export type AnyMediaProvider =
   | ({ type: 'video' } & VideoProvider)
   | ({ type: 'hls' } & HLSProvider)
   | ({ type: 'dash' } & DASHProvider)
+  | ({ type: 'shaka' } & ShakaProvider)
   | ({ type: 'youtube' } & YouTubeProvider)
   | ({ type: 'vimeo' } & VimeoProvider)
   | ({ type: 'google-cast' } & GoogleCastProvider);
@@ -25,11 +27,11 @@ export type AnyMediaProvider =
 export interface MediaProviderLoader<Provider extends MediaProviderAdapter = MediaProviderAdapter> {
   readonly name: string;
   target: HTMLElement | null;
-  canPlay(src: Src): boolean;
-  mediaType(src?: Src): MediaType;
-  preconnect?(ctx: MediaContext): void;
-  load(ctx: MediaContext): Promise<Provider>;
-  loadPoster?(src: Src, ctx: MediaContext, abort: AbortController): Promise<string | null>;
+  canPlay: (src: Src) => boolean;
+  mediaType: (src?: Src) => MediaType;
+  preconnect?: (ctx: MediaContext) => void;
+  load: (ctx: MediaContext) => Promise<Provider>;
+  loadPoster?: (src: Src, ctx: MediaContext, abort: AbortController) => Promise<string | null>;
 }
 
 export interface MediaProviderAdapter {
@@ -41,24 +43,24 @@ export interface MediaProviderAdapter {
   readonly pictureInPicture?: MediaPictureInPictureAdapter;
   readonly airPlay?: MediaRemotePlaybackAdapter;
   readonly canLiveSync?: boolean;
-  preconnect?(): void;
-  setup(): void;
-  destroy?(): void;
-  play(): Promise<void>;
-  pause(): Promise<void>;
-  setMuted(muted: boolean): void;
-  setCurrentTime(time: number): void;
-  setVolume(volume: number): void;
-  setPlaysInline?(inline: boolean): void;
-  setPlaybackRate?(rate: number): void;
-  loadSource(src: Src, preload: MediaState['preload']): Promise<void>;
+  preconnect?: () => void;
+  setup: () => void;
+  destroy?: () => void;
+  play: () => Promise<void>;
+  pause: () => Promise<void>;
+  setMuted: (muted: boolean) => void;
+  setCurrentTime: (time: number) => void;
+  setVolume: (volume: number) => void;
+  setPlaysInline?: (inline: boolean) => void;
+  setPlaybackRate?: (rate: number) => void;
+  loadSource: (src: Src, preload: MediaState['preload']) => Promise<void>;
 }
 
 export interface AudioGainAdapter {
   readonly supported: boolean;
   readonly currentGain: number | null;
-  setGain(gain: number): void;
-  removeGain(): void;
+  setGain: (gain: number) => void;
+  removeGain: () => void;
 }
 
 export interface MediaRemotePlaybackAdapter {
@@ -69,7 +71,7 @@ export interface MediaRemotePlaybackAdapter {
   /**
    * Request remote playback.
    */
-  prompt(options?: unknown): Promise<void>;
+  prompt: (options?: unknown) => Promise<void>;
 }
 
 export interface MediaFullscreenAdapter extends FullscreenAdapter {}
@@ -87,9 +89,9 @@ export interface MediaPictureInPictureAdapter {
   /**
    * Request to display the current provider in picture-in-picture mode.
    */
-  enter(): Promise<void | PictureInPictureWindow>;
+  enter: () => Promise<void | PictureInPictureWindow>;
   /**
    * Request to display the current provider in inline by exiting picture-in-picture mode.
    */
-  exit(): Promise<void>;
+  exit: () => Promise<void>;
 }
